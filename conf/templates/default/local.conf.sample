@@ -1,0 +1,34 @@
+# Next Thing Co. C.H.I.P. Local Configuration Sample
+
+# Target Machine
+MACHINE ??= "chip"
+
+# Distribution
+DISTRO ??= "poky"
+
+# Package Format
+PACKAGE_CLASSES ??= "package_ipk"
+
+# Extra image features
+EXTRA_IMAGE_FEATURES ?= "debug-tweaks"
+
+# Free up disk space after build if needed
+# INHERIT += "rm_work"
+
+# Concurrency settings (Adjust according to host CPU cores)
+# BB_NUMBER_THREADS ?= "8"
+# PARALLEL_MAKE ?= "-j 8"
+
+# Disk monitor to avoid running out of disk space during build
+BB_DISKMON_DIRS ??= "\
+    STOPTASKS,${TMPDIR},1G,100K \
+    STOPTASKS,${DL_DIR},1G,100K \
+    STOPTASKS,${SSTATE_DIR},1G,100K \
+    STOPTASKS,/tmp,100M,100K \
+    HALT,${TMPDIR},100M,1K \
+    HALT,${DL_DIR},100M,1K \
+    HALT,${SSTATE_DIR},100M,1K \
+    HALT,/tmp,10M,1K"
+
+CONF_VERSION = "2"
+
