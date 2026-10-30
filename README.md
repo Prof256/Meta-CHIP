@@ -61,8 +61,8 @@ Yocto requires a Linux host. On Windows 10/11, you can build inside **WSL2 (Ubun
 sudo apt update
 # Install Packages for Yocto
 sudo apt install build-essential chrpath cpio debianutils diffstat file gawk \
-     gcc git iputils-ping libacl1 libcrypt-dev locales python3 python3-git \ 
-     python3-jinja2 python3-pexpect python3-pip python3-subunit socat texinfo \ 
+     gcc git iputils-ping libacl1 libcrypt-dev locales python3 python3-git \
+     python3-jinja2 python3-pexpect python3-pip python3-subunit socat texinfo \
      unzip wget xz-utils zstd
 #Install Packages for CHIP
 sudo apt install -y libegl-mesa0 libsdl1.2-dev pylint lz4 sunxi-tools parted
