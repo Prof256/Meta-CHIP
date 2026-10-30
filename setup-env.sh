@@ -22,7 +22,7 @@ echo "========================================================"
 # Check if Poky is present, clone if missing
 if [ ! -d "$PARENT_DIR/poky" ]; then
     echo "Poky not found in $PARENT_DIR/poky. Cloning $YOCTO_BRANCH branch..."
-    git clone -b "$YOCTO_BRANCH" git://git.yoctoproject.org/poky "$PARENT_DIR/poky"
+    git clone --branch "$YOCTO_BRANCH" https://git.yoctoproject.org/git/poky "$PARENT_DIR/poky"
 fi
 
 cd "$PARENT_DIR" || return 1
@@ -53,4 +53,3 @@ echo " Recommended build targets:"
 echo "   bitbake chip-image-minimal    (Minimal, fast-booting console image)"
 echo "   bitbake chip-image-base       (Full image with WiFi, BT, SSH, and debug tools)"
 echo "========================================================"
-
