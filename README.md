@@ -1,8 +1,10 @@
 # Meta-CHIP: Yocto BSP Layer for Next Thing Co. C.H.I.P.
 
-`meta-chip` is a modern **Yocto Project / OpenEmbedded Board Support Package (BSP) layer** for the **Next Thing Co. C.H.I.P.** ($9 single-board computer).
+`meta-chip` is a beginner-friendly Yocto Project / OpenEmbedded Board Support Package (BSP) layer for the **Next Thing Co. C.H.I.P.** single-board computer.
 
-It replaces legacy, unmaintained 3.4/4.4 vendor kernels with modern upstream software:
+This layer replaces old vendor kernels with modern upstream software and is designed to help you build a usable Linux system for the C.H.I.P. using current Yocto tools.
+
+It includes:
 * **Yocto Releases:** **Scarthgap (5.0 LTS)** / **Kirkstone (4.0 LTS)**
 * **Linux Kernel:** **Mainline Linux 6.6 LTS** (`linux-chip`)
 * **Bootloader:** **Mainline Das U-Boot 2024.01** (`u-boot-chip`)
@@ -16,47 +18,54 @@ It replaces legacy, unmaintained 3.4/4.4 vendor kernels with modern upstream sof
 
 ---
 
-## Repository Structure
+## What this repo contains
 
 ```text
 Meta-CHIP/
 ├── conf/
-│   ├── layer.conf                       # Yocto layer definition (scarthgap/kirkstone compat)
+│   ├── layer.conf                       # Yocto layer definition
 │   ├── machine/
-│   │   └── chip.conf                    # Next Thing Co. C.H.I.P. machine configuration
-│   └── templates/default/               # Template bblayers.conf and local.conf
+│   │   └── chip.conf                    # C.H.I.P. machine configuration
+│   └── templates/default/
 │       ├── bblayers.conf.sample
 │       └── local.conf.sample
 ├── recipes-bsp/
 │   └── u-boot/
 │       ├── files/
-│       │   └── boot.cmd                 # Distro boot script (scans USB first, then NAND UBI)
-│       └── u-boot-chip_2024.01.bb       # Mainline U-Boot recipe
+│       │   └── boot.cmd                 # U-Boot boot script
+│       └── u-boot-chip_2024.01.bb
 ├── recipes-kernel/
 │   └── linux/
 │       ├── linux-chip/
-│       │   └── defconfig                # Tailored minimal kernel config for Allwinner R8
-│       └── linux-chip_6.6.bb            # Mainline Linux 6.6 LTS recipe
+│       │   └── defconfig
+│       └── linux-chip_6.6.bb
 ├── recipes-core/
 │   └── images/
-│       ├── chip-image-minimal.bb        # Lightweight console image (~30 MB)
-│       └── chip-image-base.bb           # Image with WiFi, BT, SSH, and diagnostic tools
+│       ├── chip-image-minimal.bb
+│       └── chip-image-base.bb
 ├── scripts/
-│   ├── flash-chip.sh                    # Host helper for FEL-mode testing and RAM booting
-│   └── create-usb-boot.sh               # Format and install rootfs onto a USB flash drive
-├── setup-env.sh                         # One-click environment initialization script
-└── README.md
+│   ├── flash-chip.sh
+│   └── create-usb-boot.sh
+├── setup-env.sh                         # Helper script to initialize the build
+├── README.md
+└── LICENSE
 ```
 
 ---
 
-## 1. Host Setup & Prerequisites
+## Before you start
 
-Yocto requires a Linux host. On Windows 10/11, you can build inside **WSL2 (Ubuntu 22.04 LTS or 24.04 LTS)** or a Linux VM.
+This project is for a Linux build host. If you are on Windows, use **WSL2 (Ubuntu 22.04 or 24.04)** instead of building directly on Windows.
 
-> **Tip for Windows WSL2 users:** Perform your Yocto build inside the Linux virtual filesystem (e.g., `~/yocto/`) rather than `/mnt/c/`, as native ext4 inside WSL2 is 5–10x faster for BitBake and build output.
+Important:
+* Use a real Linux environment for Yocto builds.
+* Keep your build directory on the Linux filesystem, not under `/mnt/c` if possible.
+* Make sure Git is installed and working.
 
-### Install Host Dependencies (Ubuntu / Debian):
+> Tip: On WSL2, keeping the work under something like `~/yocto-chip` is much faster and more reliable than building in `/mnt/c`.
+
+### Install dependencies on Ubuntu / Debian
+
 ```bash
 sudo apt-get update
 sudo apt-get install -y gawk wget git diffstat unzip texinfo gcc build-essential \
@@ -67,115 +76,159 @@ sudo apt-get install -y gawk wget git diffstat unzip texinfo gcc build-essential
 
 ---
 
-## 2. Quickstart: Building with Yocto
+## Quick start: build the C.H.I.P. image
 
-### Step 1: Clone Poky and Meta-CHIP
+### Step 1: Create a workspace
+
 ```bash
-# Create a workspace directory
-mkdir -p ~/yocto-chip && cd ~/yocto-chip
+mkdir -p ~/yocto-chip
+cd ~/yocto-chip
+```
 
-# Clone Poky (Yocto Scarthgap LTS branch)
+### Step 2: Clone Yocto Poky and this layer
+
+Use the HTTPS URL for Yocto, not the older git protocol form.
+
+```bash
+# Clone the Yocto project
 git clone --branch scarthgap https://git.yoctoproject.org/git/poky
 
-# Clone Meta-CHIP
-# Replace the URL below if you are using a fork or a local checkout.
+# Clone this BSP layer
 git clone https://github.com/Prof256/Meta-CHIP.git meta-chip
 ```
 
-### Step 2: Initialize Build Environment
-Using the bundled setup script:
+If you are using a fork, replace the GitHub URL with your fork URL.
+
+### Step 3: Initialize the build environment
+
+From inside your workspace:
+
 ```bash
+cd ~/yocto-chip
 source meta-chip/setup-env.sh
 ```
-Or manually:
-```bash
-source poky/oe-init-build-env build-chip
-bitbake-layers add-layer ../meta-chip
-```
-Ensure `conf/local.conf` contains:
-```bitbake
-MACHINE = "chip"
-```
 
-### Step 3: Build an Image
-Build the minimal console image:
+This script checks whether Poky is present, clones it if needed, initializes the build directory, adds the `meta-chip` layer, and sets `MACHINE = "chip"` in the local configuration.
+
+### Step 4: Build an image
+
+Once the environment is ready, build one of the included images:
+
 ```bash
 bitbake chip-image-minimal
 ```
-Or build the full image with WiFi, Bluetooth, and SSH:
+
+or
+
 ```bash
 bitbake chip-image-base
 ```
 
-The build artifacts will be produced in:
-`build-chip/tmp/deploy/images/chip/`:
-* `zImage`: Modern Linux kernel
-* `sun5i-r8-chip.dtb`: Device tree blob
-* `u-boot-sunxi-with-spl.bin`: Complete U-Boot binary with SPL
-* `boot.scr`: U-Boot distro boot script
-* `chip-image-minimal-chip.rootfs.tar.gz`: Root filesystem archive (for USB)
-* `chip-image-minimal-chip.rootfs.ubi`: UBIFS image (for onboard NAND)
+The minimal image is the fastest and simplest starting point.
+The base image adds WiFi, Bluetooth, SSH, and debugging tools.
+
+### Step 5: Check your output files
+
+After a successful build, the generated files are usually in:
+
+```text
+build-chip/tmp/deploy/images/chip/
+```
+
+Common output files include:
+* `zImage` - Linux kernel
+* `sun5i-r8-chip.dtb` - device tree blob
+* `u-boot-sunxi-with-spl.bin` - U-Boot image
+* `boot.scr` - U-Boot boot script
+* `chip-image-minimal-chip.rootfs.tar.gz` - USB root filesystem archive
+* `chip-image-minimal-chip.rootfs.ubi` - UBIFS image for NAND
 
 ---
 
-## 3. Booting & Flashing Options
+## Recommended usage
 
-### Option A: USB Flash Drive Boot (Recommended)
-Because the C.H.I.P.'s onboard NAND can suffer from bad blocks and paired-page MLC wear, running Linux from a standard USB flash drive plugged into the USB-A port is the fastest, most reliable method for getting a modern system up and running.
+### Option A: Boot from USB flash drive (recommended)
+This is the easiest and most reliable method for a first-time setup.
 
-1. Insert a USB flash drive into your PC.
-2. Use the provided script to partition and extract the root filesystem:
-   ```bash
-   sudo ./meta-chip/scripts/create-usb-boot.sh /dev/sdX build-chip/tmp/deploy/images/chip/chip-image-base-chip.rootfs.tar.gz
-   ```
-3. Copy `/boot` files (`zImage`, `sun5i-r8-chip.dtb`, and `boot.scr`) to `/boot` on the USB drive.
-4. Plug the USB drive into the C.H.I.P.'s USB port and power on. U-Boot will automatically detect the USB drive and boot into modern Linux!
+```bash
+sudo ./meta-chip/scripts/create-usb-boot.sh /dev/sdX build-chip/tmp/deploy/images/chip/chip-image-base-chip.rootfs.tar.gz
+```
 
----
+Then copy the boot files (`zImage`, `sun5i-r8-chip.dtb`, `boot.scr`) to the USB drive's `/boot` directory and boot the C.H.I.P. from the USB port.
 
-### Option B: Test-Booting Over USB with FEL Mode (No Flashing Required)
-You can boot a modern kernel directly into RAM over Micro-USB without touching the onboard NAND:
+### Option B: RAM boot using FEL mode
+This method lets you test the system without flashing the internal NAND.
 
-1. Connect a jumper wire or paperclip between **FEL (pin 7)** on header **U14** and **GND (pin 1 or 2)**.
-2. Connect the Micro-USB cable to your PC.
-3. Verify connection:
+1. Short **FEL** to **GND** on header **U14**.
+2. Connect the board by USB.
+3. Run:
    ```bash
    sunxi-fel ver
-   # Output should confirm: AWUSBFEX soc=00001625(A13/R8) 00000001 ver=0001 ...
    ```
-4. Run the helper script:
+4. Then:
    ```bash
    ./meta-chip/scripts/flash-chip.sh
-   # Select option 1 (RAM Boot)
    ```
-5. Remove the FEL jumper after boot starts.
+5. Choose the RAM boot option.
+
+### Option C: Flash to onboard NAND
+This is for advanced users who want to write the system to the internal NAND flash.
 
 ---
 
-### Option C: Onboard Raw NAND (UBIFS)
-To flash the onboard NAND:
-* Page size: `16384` bytes (16 KB)
-* Physical Erase Block (PEB): `2097152` bytes (2 MB)
-* Logical Erase Block (LEB): `2064384` bytes
-The generated `*.rootfs.ubi` file can be flashed to the MTD partition labeled `rootfs` using U-Boot's `nand write` or `ubifsmount`.
+## Serial console and hardware notes
 
----
-
-## 4. Hardware Pinouts & Serial Console
-
-### Serial Debug Console (UART0)
-To view boot logs and log into the console, connect a 3.3V USB-to-UART adapter to header **U13**:
-* **U13 Pin 1:** `GND` -> UART Adapter GND
-* **U13 Pin 3:** `UART1-TX` (ttyS0 TX) -> UART Adapter RX
-* **U13 Pin 5:** `UART1-RX` (ttyS0 RX) -> UART Adapter TX
+### Serial debug console
+Connect a USB-to-UART adapter to header **U13**:
+* **U13 Pin 1:** `GND`
+* **U13 Pin 3:** `UART1-TX` -> adapter `RX`
+* **U13 Pin 5:** `UART1-RX` -> adapter `TX`
 * **Baud Rate:** `115200 8N1`
 
-### FEL Mode Header (U14)
+### FEL mode header
 * **U14 Pin 1 or 2:** `GND`
 * **U14 Pin 7:** `FEL`
-Bridge Pin 7 to GND before powering on to put the Allwinner R8 SoC into USB FEL mode.
+
+Bridge pin 7 to GND before power-on to enter FEL mode.
+
+---
+
+## Common beginner problems
+
+### `git: protocol 'git' is not supported`
+This usually means you used the old git protocol URL.
+Use:
+
+```bash
+git clone --branch scarthgap https://git.yoctoproject.org/git/poky
+```
+
+### `bitbake: command not found`
+This usually means you did not source the environment correctly.
+Run:
+
+```bash
+source meta-chip/setup-env.sh
+```
+
+### `MACHINE` is not set
+Ensure your `conf/local.conf` contains:
+
+```bitbake
+MACHINE = "chip"
+```
+
+### Build directory is in the wrong place
+If you are on Windows, avoid building inside `/mnt/c`. Use WSL2 and keep your workspace under `~/yocto-chip`.
 
 ---
 
 ## License
-MIT License. See individual recipes for upstream software licenses (GPLv2 for Linux and U-Boot).
+
+MIT License. See upstream recipes for their respective software licenses (for example, Linux and U-Boot are GPLv2-based).
+
+---
+
+## Need help?
+
+If you are new to Yocto, start with the `chip-image-minimal` target. It is the easiest path to a working build and reduces the number of variables you need to debug during your first attempt.
