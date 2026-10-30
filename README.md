@@ -54,7 +54,7 @@ Meta-CHIP/
 
 Yocto requires a Linux host. On Windows 10/11, you can build inside **WSL2 (Ubuntu 22.04 LTS or 24.04 LTS)** or a Linux VM.
 
-> **Tip for Windows WSL2 users:** Perform your Yocto build inside the Linux virtual filesystem (e.g., `~/yocto/`) rather than `/mnt/c/`, as native ext4 inside WSL2 is 5–10x faster for BitBake than cross-mounting NTFS.
+> **Tip for Windows WSL2 users:** Perform your Yocto build inside the Linux virtual filesystem (e.g., `~/yocto/`) rather than `/mnt/c/`, as native ext4 inside WSL2 is 5–10x faster for BitBake and build output.
 
 ### Install Host Dependencies (Ubuntu / Debian):
 ```bash
@@ -75,13 +75,11 @@ sudo apt-get install -y gawk wget git diffstat unzip texinfo gcc build-essential
 mkdir -p ~/yocto-chip && cd ~/yocto-chip
 
 # Clone Poky (Yocto Scarthgap LTS branch)
-git clone -b scarthgap git://git.yoctoproject.org/poky
+git clone --branch scarthgap https://git.yoctoproject.org/git/poky
 
-# Clone or symlink meta-chip
-# If you cloned Meta-CHIP in Windows at /mnt/c/Users/<user>/Documents/Meta-CHIP:
-ln -s /mnt/c/Users/david/Documents/Meta-CHIP meta-chip
-# Or clone directly:
-# git clone <your-repo-url> meta-chip
+# Clone Meta-CHIP
+# Replace the URL below if you are using a fork or a local checkout.
+git clone https://github.com/Prof256/Meta-CHIP.git meta-chip
 ```
 
 ### Step 2: Initialize Build Environment
@@ -123,7 +121,7 @@ The build artifacts will be produced in:
 ## 3. Booting & Flashing Options
 
 ### Option A: USB Flash Drive Boot (Recommended)
-Because the C.H.I.P.'s onboard NAND can suffer from bad blocks and paired-page MLC wear, running Linux from a standard USB flash drive plugged into the USB-A port is the fastest, most reliable method:
+Because the C.H.I.P.'s onboard NAND can suffer from bad blocks and paired-page MLC wear, running Linux from a standard USB flash drive plugged into the USB-A port is the fastest, most reliable method for getting a modern system up and running.
 
 1. Insert a USB flash drive into your PC.
 2. Use the provided script to partition and extract the root filesystem:
